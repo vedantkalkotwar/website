@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vedant Kalkotwar | Physics Portfolio</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Babel for handling React JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Custom Scrollbar & Selection Styles -->
+    <style>
+        /* Custom Scrollbar matching the theme */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(34, 211, 238, 0.2);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(34, 211, 238, 0.4);
+        }
+
+        /* Text Selection Color */
+        ::selection {
+            background-color: rgba(6, 182, 212, 0.3);
+            color: #cffafe;
+        }
+        
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body class="bg-[#05050a] text-slate-300 font-sans overflow-x-hidden">
+    <div id="root"></div>
+
+    <!-- React Application Script -->
+    <script type="text/babel" data-type="module">
+        // Import React and dependencies directly from CDN
+        import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+        import { 
+            BookOpen, User, FileText, Mail, Github, Linkedin, Twitter, 
+            Activity, Terminal, ArrowRight, Database, ExternalLink, Award 
+        } from 'https://esm.sh/lucide-react@0.263.1';
+
+        // --- Physics Background: Wave Packets ---
+        const WavePacketBackground = () => {
+            const canvasRef = useRef(null);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let animationFrameId;
+                let packets = [];
+                let frame = 0;
+                
+                const resize = () => {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                };
+                window.addEventListener('resize', resize);
+                resize();
+
+                const lineSpacing = 60; 
+                
+                const createPacket = (numLines) => ({
+                    lineIndex: Math.floor(Math.random() * numLines),
+                    x: -200, 
+                    speed: 2 + Math.random() * 2, 
+                    width: 40 + Math.random() * 40, 
+                    amplitude: 20 + Math.random() * 30,
+                    frequency: 0.05 + Math.random() * 0.05, 
+                    phaseSpeed: 0.1 + Math.random() * 0.1, 
+                    hue: Math.random() > 0.5 ? 180 : 280 
+                });
+
+                const draw = () => {
+                    const numLines = Math.ceil(canvas.height / lineSpacing);
+
+                    ctx.fillStyle = 'rgba(5, 5, 10, 0.2)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    if (Math.random() < 0.03) {
+                        packets.push(createPacket(numLines));
+                    }
+
+                    packets.forEach(p => { p.x += p.speed; });
+                    packets = packets.filter(p => p.x - p.width * 4 < canvas.width);
+
+                    for (let i = 0; i < numLines; i++) {
+                        const BaseY = i * lineSpacing + (lineSpacing / 2);
+                        const activePackets = packets.filter(p => p.lineIndex === i);
+
+                        ctx.beginPath();
+                        
+                        if (activePackets.length === 0) {
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+                        ctx.lineWidth = 1;
+                        ctx.moveTo(0, BaseY);
+                        ctx.lineTo(canvas.width, BaseY);
+                        ctx.stroke();
+                        continue;
+                        }
+
+                        for (let x = 0; x <= canvas.width; x += 4) {
+                            let yOffset = 0;
+                            activePackets.forEach(p => {
+                                const dx = x - p.x;
+                                if (Math.abs(dx) < p.width * 3) {
+                                    const envelope = Math.exp(-(dx * dx) / (2 * p.width * p.width));
+                                    const wave = Math.cos(dx * p.frequency - frame * p.phaseSpeed);
+                                    yOffset += p.amplitude * envelope * wave;
+                                }
+                            });
+                            const y = BaseY + yOffset;
+                            if (x === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        const lineHue = activePackets[0].hue;
+                        ctx.strokeStyle = `hsla(${lineHue}, 80%, 60%, 0.5)`;
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                    }
+                    frame++;
+                    animationFrameId = requestAnimationFrame(draw);
+                };
+
+                draw();
+                return () => {
+                    cancelAnimationFrame(animationFrameId);
+                    window.removeEventListener('resize', resize);
+                };
+            }, []);
+
+            return (
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <canvas ref={canvasRef} className="absolute inset-0" />
+                    <div 
+                        className="absolute inset-0 opacity-[0.03]" 
+                        style={{
+                        backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`,
+                        backgroundSize: '40px 40px'
+                        }}
+                    ></div>
+                </div>
+            );
+        };
+
+        // --- Sidebar Navigation ---
+        const Sidebar = ({ activeSection, scrollToSection }) => {
+            const navItems = [
+                { id: 'home', label: 'MAIN', icon: <Activity size={20} /> },
+                { id: 'research', label: 'RSCH', icon: <Database size={20} /> },
+                { id: 'about', label: 'DATA', icon: <User size={20} /> },
+                { id: 'certifications', label: 'CERT', icon: <Award size={20} /> }, 
+                { id: 'cv', label: 'CV', icon: <FileText size={20} /> },
+                { id: 'contact', label: 'MAIL', icon: <Mail size={20} /> },
+            ];
+
+            return (
+                <div className="fixed left-0 top-0 h-full w-20 hidden md:flex flex-col items-center justify-between py-10 bg-[#05050a] border-r border-white/10 z-50">
+                    <div className="w-10 h-10 bg-cyan-500/10 border border-cyan-500/50 flex items-center justify-center text-cyan-400 font-mono font-bold">
+                        Ψ
+                    </div>
+
+                    <div className="flex flex-col gap-8">
+                        {navItems.map((item) => (
+                        <div key={item.id} className="group relative flex items-center justify-center">
+                            <button
+                            onClick={() => scrollToSection(item.id)}
+                            className={`relative p-3 rounded-md transition-all duration-500 ease-out hover:bg-white/5 border-l-2 ${
+                                activeSection === item.id 
+                                ? 'text-cyan-400 bg-cyan-900/20 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.15)]' 
+                                : 'text-slate-500 border-transparent hover:text-slate-300'
+                            }`}
+                            >
+                            {item.icon}
+                            </button>
+                            <span className="absolute left-12 opacity-0 group-hover:opacity-100 group-hover:left-16 transition-all duration-300 ease-out bg-slate-900 text-cyan-400 text-xs font-mono px-3 py-1.5 border border-cyan-500/30 whitespace-nowrap z-50 rounded shadow-lg pointer-events-none">
+                            [{item.label}]
+                            </span>
+                        </div>
+                        ))}
+                    </div>
+
+                    <div className="flex flex-col gap-4 text-slate-600">
+                        <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-slate-600 to-transparent mx-auto"></div>
+                        <span className="text-[10px] font-mono writing-vertical opacity-50 tracking-widest">v.2.1.0</span>
+                    </div>
+                </div>
+            );
+        };
+
+        const TechText = ({ children, className = "" }) => (
+            <span className={`font-mono uppercase tracking-wider text-xs ${className}`}>
+                {children}
+            </span>
+        );
+
+        // --- Research Module ---
+        const ResearchModule = ({ title, category, tools, description, date }) => {
+            const [isOpen, setIsOpen] = useState(false);
+
+            return (
+                <div 
+                className="group border-b border-white/10 hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={() => setIsOpen(!isOpen)}
+                >
+                <div className="py-6 px-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                    <div className={`w-2 h-2 rounded-full ${isOpen ? 'bg-cyan-400 shadow-[0_0_10px_#22d3ee]' : 'bg-slate-600'}`}></div>
+                    <div>
+                        <TechText className="text-slate-500 block mb-1">{category} // {date}</TechText>
+                        <h3 className="text-xl md:text-2xl font-bold text-slate-200 group-hover:text-cyan-300 transition-colors">
+                        {title}
+                        </h3>
+                    </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                    <div className="hidden md:flex gap-2">
+                        {tools.map(t => (
+                        <span key={t} className="px-2 py-1 border border-white/10 text-[10px] font-mono text-slate-400 uppercase">
+                            {t}
+                        </span>
+                        ))}
+                    </div>
+                    <ArrowRight className={`text-slate-500 transition-transform duration-300 ${isOpen ? 'rotate-90 text-cyan-400' : ''}`} />
+                    </div>
+                </div>
+                
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="p-6 pt-0 pl-12 max-w-3xl">
+                    <p className="text-slate-400 leading-relaxed font-light border-l border-cyan-500/30 pl-4">
+                        {description}
+                    </p>
+                    </div>
+                </div>
+                </div>
+            );
+        };
+
+        // --- Certification Module ---
+        const CertificationModule = ({ title, org, date, description }) => (
+            <div className="flex-shrink-0 w-[85vw] md:w-[calc(50%-0.5rem)] border border-white/10 bg-slate-900/80 backdrop-blur-md p-4 rounded-md hover:border-cyan-500/50 transition-all group snap-start">
+                <div className="flex items-start gap-3">
+                    <div className="p-2 bg-cyan-900/20 rounded-md text-cyan-400 group-hover:scale-110 transition-transform shrink-0">
+                        <Award size={18} />
+                    </div>
+                    <div className="w-full">
+                        <div className="flex justify-between items-start mb-1">
+                            <h3 className="text-base font-bold text-white leading-tight">{title}</h3>
+                            <TechText className="text-slate-500 shrink-0 ml-2">{date}</TechText>
+                        </div>
+                        <p className="text-xs text-cyan-400 font-mono mb-2">{org}</p>
+                        <p className="text-slate-400 text-xs leading-relaxed">
+                            {description}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // --- Main App ---
+        const App = () => {
+            const [activeSection, setActiveSection] = useState('home');
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
+                        setActiveSection('contact');
+                        return;
+                    }
+
+                    const sections = ['home', 'research', 'about', 'certifications', 'cv', 'contact'];
+                    const current = sections.find(section => {
+                        const element = document.getElementById(section);
+                        if (element) {
+                        const rect = element.getBoundingClientRect();
+                        return rect.top >= -300 && rect.top <= window.innerHeight / 2;
+                        }
+                        return false;
+                    });
+                    if (current) setActiveSection(current);
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const scrollToSection = (id) => {
+                const el = document.getElementById(id);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+            };
+
+            return (
+                <div className="min-h-screen">      
+                    <WavePacketBackground />
+                    <Sidebar activeSection={activeSection} scrollToSection={scrollToSection} />
+
+                    {/* Mobile Nav */}
+                    <div className="md:hidden fixed top-0 w-full bg-[#05050a]/90 backdrop-blur-md border-b border-white/10 z-50 px-4 py-3 flex justify-between items-center">
+                        <span className="text-cyan-400 font-bold font-mono">Ψ_IISERB</span>
+                        <div className="flex gap-4">
+                        <Activity size={20} onClick={() => scrollToSection('home')} />
+                        <Database size={20} onClick={() => scrollToSection('research')} />
+                        <Award size={20} onClick={() => scrollToSection('certifications')} />
+                        <Mail size={20} onClick={() => scrollToSection('contact')} />
+                        </div>
+                    </div>
+
+                    <main className="md:pl-20 relative z-10 pb-32">
+                        
+                        {/* Hero Section */}
+                        <section id="home" className="min-h-[85vh] flex flex-col justify-center px-6 md:px-20 max-w-7xl mx-auto pt-20 md:pt-0">
+                        <div className="border-l border-white/10 pl-8 md:pl-12 relative">
+                            <div className="absolute -left-[1px] top-0 h-20 w-[1px] bg-cyan-500"></div>
+                            
+                            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none mb-6 mix-blend-difference">
+                            VEDANT<br/>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 opacity-90">KALKOTWAR</span>
+                            </h1>
+
+                            <div className="max-w-2xl mt-8">
+                            <p className="text-xl md:text-2xl text-slate-400 font-light leading-relaxed">
+                                Fourth-year BS-MS student at <span className="text-white font-medium">IISER Bhopal</span>.
+                                My primary interest lies in <span className="text-cyan-400">quantum science and technology</span>, with a focus on <span className="text-purple-400">quantum information and computation</span>.
+                            </p>
+                            </div>
+                        </div>
+                        </section>
+
+                        {/* Research Data Stream */}
+                        <section id="research" className="min-h-screen py-12 px-6 md:px-20 max-w-7xl mx-auto">
+                        <div className="flex items-end justify-between mb-16 border-b border-white/10 pb-6">
+                            <div>
+                            <h2 className="text-4xl md:text-5xl font-bold text-white">Research Protocol</h2>
+                            <TechText className="text-cyan-500 mt-2 block">Experimental & Theoretical Logs</TechText>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <ResearchModule 
+                            title="Transmon Qubit Dynamics & DNNs"
+                            category="QuCIS Lab Internship"
+                            date="May 2025 - Sep 2025"
+                            tools={['QuTip', 'TensorFlow', 'Python']}
+                            description="Simulated transmon qubit dynamics to analyze quantum gate pulse sequences. Applied Deep Neural Networks (DNNs) to predict optimal gate parameters, enhancing quantum gate fidelity by integrating simulation and machine learning techniques."
+                            />
+                            <ResearchModule 
+                            title="Quantum Statistical Simulator"
+                            category="Computational Physics"
+                            date="2023"
+                            tools={['Qiskit', 'Python', 'Monte Carlo']}
+                            description="Implemented quantum circuits for Quantum Galton Boards, including unbiased, biased, and noisy quantum walks. Performed comparative statistical analysis between quantum and classical Monte Carlo simulations to evaluate quantum accuracy."
+                            />
+                            <ResearchModule 
+                            title="Quantum Tunneling Simulation"
+                            category="Personal Project"
+                            date="2023"
+                            tools={['Python', 'NumPy', 'Matplotlib']}
+                            description="Developed a Python-based simulation solving the time-dependent Schrödinger equation using numerical methods. Visualized wave packet tunneling through potential barriers to understand quantum mechanical effects."
+                            />
+                        </div>
+                        </section>
+
+                        {/* About / Data Bank */}
+                        <section id="about" className="py-20 px-6 md:px-20 max-w-7xl mx-auto">
+                        <div className="grid md:grid-cols-12 gap-12">
+                            
+                            <div className="md:col-span-5 space-y-8">
+                            <div className="relative aspect-[4/5] border border-white/10 bg-slate-900/50 p-2">
+                                <div className="w-full h-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+                                <User size={64} className="text-slate-600 group-hover:text-cyan-400 transition-colors" />
+                                
+                                <div className="absolute bottom-4 left-4 font-mono text-xs text-cyan-500">
+                                    ID: 22363<br/>
+                                    LOC: IISERB
+                                </div>
+                                </div>
+                                <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-cyan-500"></div>
+                                <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-cyan-500"></div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white/5 p-4 border-l-2 border-purple-500">
+                                <div className="text-2xl font-bold text-white">7.08</div>
+                                <TechText className="text-slate-500">Cum. CPI</TechText>
+                                </div>
+                                <div className="bg-white/5 p-4 border-l-2 border-cyan-500">
+                                <div className="text-2xl font-bold text-white">BS-MS</div>
+                                <TechText className="text-slate-500">Physics</TechText>
+                                </div>
+                            </div>
+                            </div>
+
+                            <div className="md:col-span-7 flex flex-col justify-center">
+                            <div className="mb-8">
+                                <TechText className="text-purple-400 mb-2 block">Subject Profile</TechText>
+                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                                Bridging Theory &<br/>Experiment.
+                                </h2>
+                                <div className="prose prose-invert prose-lg text-slate-400 font-light">
+                                <p>
+                                    I am a fourth-year BS-MS student at IISER Bhopal with a background in both computational and experimental physics. This duality enables me to approach problems from multiple perspectives.
+                                </p>
+                                <p>
+                                    My primary interest lies in <strong>quantum science and technology</strong>, with a focus on <strong>quantum information and computation</strong>. And I aspire to pursue further studies and contribute to advancements in this field.
+                                </p>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-white/10 pt-8">
+                                <h4 className="font-mono text-sm text-white mb-4">[ SKILL_MATRIX ]</h4>
+                                <div className="flex flex-wrap gap-3">
+                                {['Python', 'C++', 'Qiskit', 'QuTip', 'TensorFlow', 'Jax', 'LaTeX', 'Mathematica', 'MATLAB'].map((skill) => (
+                                    <span key={skill} className="px-3 py-1 bg-slate-800/50 text-cyan-400 text-xs font-mono border border-cyan-900/30 hover:border-cyan-400/50 transition-colors cursor-default">
+                                    {skill}
+                                    </span>
+                                ))}
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                        </section>
+
+                        {/* New Certifications Section */}
+                        <section id="certifications" className="py-20 px-6 md:px-20 max-w-7xl mx-auto">
+                        <div className="flex items-end justify-between mb-16 border-b border-white/10 pb-6">
+                            <div>
+                            <h2 className="text-4xl md:text-5xl font-bold text-white">Credential Log</h2>
+                            <TechText className="text-purple-500 mt-2 block">Summer Schools & Certifications</TechText>
+                            </div>
+                        </div>
+                        
+                        {/* Horizontal Scroll Container */}
+                        <div className="flex gap-4 overflow-x-auto pb-6 snap-x custom-scrollbar">
+                            <CertificationModule 
+                            title="WISER Summer School"
+                            org="Women in Science, Engineering and Research"
+                            date="June 2025"
+                            description="Intensive program focusing on advanced topics in scientific research methodology and interdisciplinary collaboration."
+                            />
+                            <CertificationModule 
+                            title="Qiskit Global Summer School"
+                            org="IBM Quantum"
+                            date="July 2024"
+                            description="Comprehensive two-week curriculum on quantum computing algorithms, VQE, and error correction using Qiskit SDK."
+                            />
+                            <CertificationModule 
+                            title="Quantum Computing"
+                            org="NPTEL Online Certification"
+                            date="Oct 2023"
+                            description="Completed an 8-week advanced course covering quantum mechanics foundations, qubits, quantum gates, and quantum algorithms."
+                            />
+                        </div>
+                        </section>
+
+                        {/* CV & Contact Split */}
+                        <section className="grid md:grid-cols-2 min-h-[80vh] items-center">
+                        
+                        <div id="cv" className="bg-white/5 border-r border-white/10 p-6 md:p-20 flex flex-col justify-between hover:bg-white/10 transition-colors group h-full">
+                            <div>
+                            <Terminal size={32} className="text-slate-500 mb-6 group-hover:text-cyan-400 transition-colors" />
+                            <h2 className="text-3xl font-bold text-white mb-4">Curriculum Vitae</h2>
+                            <p className="text-slate-400 mb-8 max-w-sm">
+                                Detailed academic history, publications, and coursework. Formatted for print and digital archival.
+                            </p>
+                            </div>
+                            <button className="self-start px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-black font-bold font-mono text-sm flex items-center gap-2 mt-8">
+                            DOWNLOAD_PDF <FileText size={16} />
+                            </button>
+                        </div>
+
+                        <div id="contact" className="p-6 md:p-20 flex flex-col justify-between relative overflow-hidden h-full">
+                            <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/20 to-purple-900/20 -z-10"></div>
+                            
+                            <div>
+                            <Mail size={32} className="text-slate-500 mb-6" />
+                            <h2 className="text-3xl font-bold text-white mb-4">Initiate Comms</h2>
+                            <p className="text-slate-400 mb-8">
+                                Open for research collaborations, summer projects, or theoretical discussions.
+                            </p>
+                            <div className="space-y-4 font-mono text-sm">
+                                <div className="flex items-center gap-3 text-slate-300">
+                                <span className="text-cyan-500">::</span> vedant22@iiserb.ac.in
+                                </div>
+                                <div className="flex items-center gap-3 text-slate-300">
+                                <span className="text-cyan-500">::</span> Bhopal, India
+                                </div>
+                            </div>
+                            </div>
+
+                            <div className="flex gap-6 mt-8 md:mt-0">
+                            <Github className="text-slate-500 hover:text-white cursor-pointer transition-colors" />
+                            <Linkedin className="text-slate-500 hover:text-white cursor-pointer transition-colors" />
+                            <a href="mailto:vedant22@iiserb.ac.in">
+                                <Mail className="text-slate-500 hover:text-white cursor-pointer transition-colors" />
+                            </a>
+                            </div>
+                        </div>
+
+                        </section>
+                    </main>
+                </div>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
